@@ -4,6 +4,7 @@ import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Camera, Upload, X } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
+import { sb } from "@/integrations/supabase/untyped";
 import { useAuth } from "@/hooks/useAuth";
 import { useToast } from "@/hooks/use-toast";
 
@@ -174,7 +175,7 @@ export const EditableAvatar = ({ name, currentAvatarUrl, onAvatarUpdate }: Edita
         .getPublicUrl(filePath);
 
       // Salvar no perfil do usuário
-      const { error: profileError } = await supabase
+      const { error: profileError } = await sb
         .from('profiles')
         .upsert({
           user_id: user.id,

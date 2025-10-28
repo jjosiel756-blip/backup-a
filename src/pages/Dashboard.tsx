@@ -10,6 +10,7 @@ import { ThemeSelector } from "@/components/ThemeSelector";
 import { Clock } from "@/components/Clock";
 import { useState, useEffect } from "react";
 import { supabase } from "@/integrations/supabase/client";
+import { sb } from "@/integrations/supabase/untyped";
 import { useMotivationalMessage } from "@/hooks/useMotivationalMessage";
 
 const Dashboard = () => {
@@ -21,7 +22,7 @@ const Dashboard = () => {
     const loadUserName = async () => {
       if (!user) return;
 
-      const { data: profile, error } = await supabase
+      const { data: profile, error } = await sb
         .from('profiles')
         .select('name')
         .eq('user_id', user.id)

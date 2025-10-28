@@ -1,6 +1,7 @@
 import { useState, useEffect, useRef } from 'react';
 import { useAuth } from '@/hooks/useAuth';
 import { supabase } from '@/integrations/supabase/client';
+import { sb } from '@/integrations/supabase/untyped';
 
 const NutriAI = () => {
   const { user } = useAuth();
@@ -24,12 +25,12 @@ const NutriAI = () => {
     const fetchProfileName = async () => {
       if (!user?.id) return;
       
-      const { data, error } = await supabase
+      const { data, error } = await sb
         .from('profiles')
         .select('name')
         .eq('user_id', user.id)
-        .single();
-      
+        .maybeSingle();
+        
       if (data?.name) {
         setProfileName(data.name);
       }

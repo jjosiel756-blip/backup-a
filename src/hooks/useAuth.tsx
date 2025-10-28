@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import { User, Session } from "@supabase/supabase-js";
 import { supabase } from "@/integrations/supabase/client";
+import { sb } from "@/integrations/supabase/untyped";
 
 export function useAuth() {
   const [user, setUser] = useState<User | null>(null);
@@ -36,11 +37,11 @@ export function useAuth() {
 
   const updateProfileFromOAuth = async (user: User) => {
     try {
-      const { data: existingProfile } = await supabase
+      const { data: existingProfile } = await sb
         .from('profiles')
         .select('*')
         .eq('user_id', user.id)
-        .single();
+        .maybeSingle();
 
       // Se já existe um perfil com nome válido (não é email), não sobrescrever
       if (existingProfile?.name && 
@@ -49,7 +50,7 @@ export function useAuth() {
         // Apenas atualizar avatar se necessário
         const newAvatar = user.user_metadata?.avatar_url || user.user_metadata?.picture;
         if (newAvatar && newAvatar !== existingProfile.avatar_url) {
-          await supabase
+          await sb
             .from('profiles')
             .update({ avatar_url: newAvatar })
             .eq('user_id', user.id);
@@ -72,12 +73,12 @@ export function useAuth() {
       };
 
       if (existingProfile) {
-        await supabase
+        await sb
           .from('profiles')
           .update(profileData)
           .eq('user_id', user.id);
       } else {
-        await supabase
+        await sb
           .from('profiles')
           .insert(profileData);
       }

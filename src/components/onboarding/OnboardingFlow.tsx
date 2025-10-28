@@ -3,6 +3,7 @@ import { useNavigate } from "react-router-dom";
 import { toast } from "sonner";
 import { useAuth } from "@/hooks/useAuth";
 import { supabase } from "@/integrations/supabase/client";
+import { sb } from "@/integrations/supabase/untyped";
 import ProgressIndicator from "./ProgressIndicator";
 import Step1 from "./steps/Step1";
 import Step2 from "./steps/Step2";
@@ -65,7 +66,7 @@ const OnboardingFlow = () => {
         }
 
         // Salvar no Supabase usando upsert para criar ou atualizar
-        const { error } = await supabase
+        const { error } = await sb
           .from('profiles')
           .upsert({
             user_id: user.id,

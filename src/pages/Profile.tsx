@@ -11,6 +11,7 @@ import { useEffect, useMemo, useState } from "react";
 import { useAuth } from "@/hooks/useAuth";
 import { EditableAvatar } from "@/components/EditableAvatar";
 import { supabase } from "@/integrations/supabase/client";
+import { sb } from "@/integrations/supabase/untyped";
 import { useToast } from "@/hooks/use-toast";
 import { useNavigate } from "react-router-dom";
 
@@ -65,11 +66,11 @@ const Profile = () => {
 
       try {
         // Buscar perfil do Supabase
-        const { data: profile } = await supabase
+        const { data: profile } = await sb
           .from('profiles')
           .select('*')
           .eq('user_id', user.id)
-          .single();
+          .maybeSingle();
 
         if (profile) {
           setAvatarUrl(profile.avatar_url || '');
@@ -187,13 +188,13 @@ const Profile = () => {
     try {
       if (!user) return;
 
-      const { data: profile } = await supabase
+      const { data: profile } = await sb
         .from('profiles')
         .select('*')
         .eq('user_id', user.id)
-        .single();
+        .maybeSingle();
 
-      const { data: meals } = await supabase
+      const { data: meals } = await sb
         .from('meals')
         .select('*')
         .eq('user_id', user.id);
@@ -270,8 +271,8 @@ const Profile = () => {
       if (!user) return;
 
       // Deletar dados do usuário
-      await supabase.from('meals').delete().eq('user_id', user.id);
-      await supabase.from('profiles').delete().eq('user_id', user.id);
+      await sb.from('meals').delete().eq('user_id', user.id);
+      await sb.from('profiles').delete().eq('user_id', user.id);
 
       // Fazer logout
       await signOut();
