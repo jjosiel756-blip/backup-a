@@ -133,56 +133,43 @@ const NutriAI = () => {
     }
   }, [isActive, isSpeaking]);
 
-  // ✅ FALA NATURAL E HUMANA COM PAUSAS
-  const speakText = (text: string) => {
-    return new Promise<void>((resolve) => {
-      if (!('speechSynthesis' in window)) {
-        resolve();
+  // ✅ FALA USANDO ELEVENLABS
+  const speakText = async (text: string) => {
+    try {
+      console.log('🔊 Gerando áudio com ElevenLabs...');
+      setIsSpeaking(true);
+      
+      if (recognitionRef.current) {
+        recognitionRef.current.stop();
+      }
+
+      const { data, error } = await supabase.functions.invoke('text-to-speech', {
+        body: { 
+          text, 
+          gender: userGender 
+        }
+      });
+
+      if (error) {
+        console.error('❌ Erro ao gerar áudio:', error);
+        setIsSpeaking(false);
         return;
       }
 
-      window.speechSynthesis.cancel();
-      
-      const utterance = new SpeechSynthesisUtterance();
-      
-      // ✅ CONFIGURAÇÕES PARA VOZ HUMANA
-      const voiceSettings = getVoiceSettings();
-      utterance.rate = voiceSettings.rate;
-      utterance.pitch = voiceSettings.pitch;
-      utterance.volume = voiceSettings.volume;
-      utterance.lang = 'pt-BR';
-      
-      // ✅ TEXTOS COM PAUSAS NATURAIS
-      const naturalText = text
-        .replace(/!/g, '.')  // Troca ! por . para pausa natural
-        .replace(/\?/g, ',') // Troca ? por , para entonação
-        .replace(/\./g, '. '); // Espaços após pontos
-      
-      utterance.text = naturalText;
-
-      // ✅ TENTAR ENCONTRAR VOZES NATIVAS BRASILEIRAS
-      const voices = window.speechSynthesis.getVoices();
-      const ptVoice = voices.find(voice => 
-        voice.lang.includes('pt') && 
-        ((userGender === 'male' && voice.name.toLowerCase().includes('male')) ||
-         (userGender === 'female' && voice.name.toLowerCase().includes('female')))
+      // Converter base64 para blob e reproduzir
+      const audioBlob = new Blob(
+        [Uint8Array.from(atob(data.audioContent), c => c.charCodeAt(0))],
+        { type: 'audio/mpeg' }
       );
-
-      if (ptVoice) {
-        utterance.voice = ptVoice;
-      }
-
-      utterance.onstart = () => {
-        console.log('🔊 NutriAI falando...');
-        setIsSpeaking(true);
-        if (recognitionRef.current) {
-          recognitionRef.current.stop();
-        }
-      };
-
-      utterance.onend = () => {
+      
+      const audioUrl = URL.createObjectURL(audioBlob);
+      const audio = new Audio(audioUrl);
+      
+      audio.onended = () => {
         console.log('🔇 NutriAI terminou de falar');
+        URL.revokeObjectURL(audioUrl);
         setIsSpeaking(false);
+        
         if (isActive && recognitionRef.current) {
           setTimeout(() => {
             try {
@@ -192,20 +179,21 @@ const NutriAI = () => {
             }
           }, 1000);
         }
-        resolve();
       };
 
-      utterance.onerror = (event) => {
-        console.error('❌ Erro na fala:', event);
+      audio.onerror = (event) => {
+        console.error('❌ Erro ao reproduzir áudio:', event);
+        URL.revokeObjectURL(audioUrl);
         setIsSpeaking(false);
-        resolve();
       };
 
-      // ✅ FALA COM PAUSA INICIAL PARA SOAR NATURAL
-      setTimeout(() => {
-        window.speechSynthesis.speak(utterance);
-      }, 300);
-    });
+      await audio.play();
+      console.log('🔊 Reproduzindo áudio do ElevenLabs');
+      
+    } catch (error) {
+      console.error('❌ Erro no speakText:', error);
+      setIsSpeaking(false);
+    }
   };
 
   // ✅ EXTRAIR NOME DA FALA DO USUÁRIO
